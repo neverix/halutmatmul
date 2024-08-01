@@ -3,6 +3,7 @@
 from __future__ import annotations
 from functools import reduce
 from typing import Any, Dict, Optional
+from tqdm.auto import tqdm
 import faiss
 
 import numpy as np
@@ -426,11 +427,13 @@ class HalutMatmul:
         # called with B.T
         B = np.atleast_2d(B)
         luts = np.zeros((B.shape[0], self.C, self.K))
-        for i, q in enumerate(B):
+        for i, q in enumerate(tqdm(B)):
             luts[i] = maddness_lut(q, self.prototypes)
+        print("Final quantization...")
         if self.quantize_lut:
             luts, offset, scale = maddness_quantize_luts(luts)
             return luts, offset, scale
+        print("Done!")
         return luts, 0, 1
 
     def _calc_matmul(

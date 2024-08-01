@@ -377,7 +377,7 @@ def learn_binary_tree_splits(
     check_x_dims: int = 8,  # can be used to check more or less dims with max losses
     learn_quantize_params: bool = False,
 ) -> Tuple[list, int, Union[list, np.ndarray]]:
-    assert K in (4, 8, 16, 32, 64, 128)
+    assert K in (1, 2, 4, 8, 16, 32, 64, 128)
     nsplits = int(np.log2(K))
 
     X = X.copy().astype(np.float32)
@@ -595,11 +595,14 @@ def learn_proto_and_hash_function(
     return all_splits_np, all_prototypes, report_array, thresholds, dims
 
 
+# @numba.njit(fastmath=True)
 def maddness_lut(q: np.ndarray, all_prototypes: np.ndarray) -> np.ndarray:
-    q = q.reshape(1, 1, -1)  # all_prototypes is shape C, K, D
-    return (q * all_prototypes).sum(axis=2)  # C, K
+    # q = q.reshape(1, 1, -1)  # all_prototypes is shape C, K, D
+    return np.einsum("d,ckd->ck", q.reshape(-1), all_prototypes)  # C, D
+    # return (q * all_prototypes).sum(axis=2)  # C, K
 
 
+@numba.njit(fastmath=True)
 def maddness_quantize_luts(
     luts: np.ndarray, force_power_of_2: bool = True
 ) -> tuple[np.ndarray, float, float]:
